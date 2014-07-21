@@ -2,6 +2,8 @@
 ==================================================================
 [![Latest Stable Version](https://poser.pugx.org/luracast/restler/v/stable.png)](https://packagist.org/packages/luracast/restler) [![Total Downloads](https://poser.pugx.org/luracast/restler/downloads.png)](https://packagist.org/packages/luracast/restler) [![Latest Unstable Version](https://poser.pugx.org/luracast/restler/v/unstable.png)](https://packagist.org/packages/luracast/restler) [![License](https://poser.pugx.org/luracast/restler/license.png)](https://packagist.org/packages/luracast/restler)
 
+### WORKING IN PROGRESS ON MODIFIED ROUTER
+
 ### Version 3.0 Release Candidate 5
 
 Restler is a simple and effective multi-format Web API Server written in PHP.
