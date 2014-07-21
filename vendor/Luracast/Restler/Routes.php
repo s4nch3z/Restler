@@ -373,6 +373,66 @@ class Routes
                 return strlen($b) - strlen($a);
             });
             foreach ($p['*'] as $key => $value) {
+                //================== dynamic+wildcard routes ============
+//                print_r($key);
+//                print("\n");
+//                print_r($value);
+//                print("\n");
+                $regex = str_replace(array('{', '}'),
+                    array('(?P<', '>[^/]+)'), $key) . '.*';
+//                print($path);
+//                print("\n");
+//                print($regex);
+//                print("\n");
+                if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
+                    $matches = $matches[0];
+                    $full_path = $matches[0];
+                    $key_path = $key;
+//                    print_r($matches);
+                    $found = true;
+                    foreach ($matches as $k => $v) {
+                        if (is_numeric($k)) {
+                            unset($matches[$k]);
+                            continue;
+                        }
+//                        print($k);
+//                        print("\n");
+//                        print($v);
+//                        print("\n");
+                        $index = intval(substr($k, 1));
+                        $details = $value[$httpMethod]['metadata']['param'][$index];
+                        if ($k{0} == 's' || strpos($k, static::pathVarTypeOf($v)) === 0) {
+                            //remove the newlines
+                            $data[$details['name']] = trim($v, PHP_EOL);
+                            $key_path = str_replace('{'.$k.'}', $v, $key_path);
+                        } else {
+                            $status = 400;
+                            $message = 'invalid value specified for `'
+                                . $details['name'] . '`';
+                            $found = false;
+                            break;
+                        }
+                    }
+                    if ($found && strpos($full_path, $key_path) === 0 && isset($value[$httpMethod])) {
+//                        print_r($data);
+//                        print("\n");
+//                        print_r($full_path);
+//                        print("\n");
+//                        print_r($key_path);
+                        //path found, convert rest of the path to parameters
+                        $parse_path = substr($full_path, strlen($key_path) + 1);
+                        $wc_path_params = empty($parse_path)
+                            ? array()
+                            : explode('/', $parse_path);
+                        foreach ($value[$httpMethod]['metadata']['param'] as $wc_param) {
+                            if ($wc_param['properties']['from'] === 'wildcard-path')
+                                $data[$wc_param['name']] = $wc_path_params;
+                        }
+//                        print_r($data);
+                        return static::populate($value[$httpMethod], $data);
+                    }
+                }
+
                 if (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
                     //path found, convert rest of the path to parameters
                     $path = substr($path, strlen($key) + 1);
@@ -383,7 +443,11 @@ class Routes
                     return $call;
                 }
             }
+
         }
+
+
+
         //================== dynamic routes =============================
         //add newline char if trailing slash is found
         if (substr($path, -1) == '/')
@@ -398,6 +462,10 @@ class Routes
             $regex = str_replace(array('{', '}'),
                 array('(?P<', '>[^/]+)'), $key);
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
+//                print_r($key);
+//                print_r($value);
+//                print($path);
+//                print($regex);
                 $matches = $matches[0];
                 $found = true;
                 foreach ($matches as $k => $v) {
